@@ -244,6 +244,14 @@ class WiFiManagerParameter {
         WM_DEBUG_MAX       = 5  // MAX extra dev auditing, var dumps etc (MAX+1 will print timing,mem and frag info)
     } wm_debuglevel_t;
 
+enum class AutoConnectResult {
+
+    CONNECTED_BY_CONFIG_MENUE = 1,
+    CONNECTED_BY_SAVED_CREDENTIALS = 2,
+    FAILED = -1,
+    UNDEFINED = -42
+};
+
 class WiFiManager
 {
   public:
@@ -255,6 +263,8 @@ class WiFiManager
     // auto connect to saved wifi, or custom, and start config portal on failures
     boolean       autoConnect();
     boolean       autoConnect(char const *apName, char const *apPassword = NULL);
+    AutoConnectResult autoConnectWithResult();
+    AutoConnectResult autoConnectWithResult(char const *apName, char const *apPassword = NULL);
 
     //manually start the config portal, autoconnect does this automatically on connect failure
     boolean       startConfigPortal(); // auto generates apname
