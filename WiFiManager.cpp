@@ -389,6 +389,11 @@ boolean WiFiManager::autoConnect(char const *apName, char const *apPassword) {
     return false; // not connected and not cp
   }
 
+  // not connected start configportal
+  bool res = startConfigPortal(apName, apPassword);
+  return res;
+}
+
 /**
  * [autoConnect description]
  * @access public
@@ -402,6 +407,7 @@ AutoConnectResult WiFiManager::autoConnectWithResult(char const *apName, char co
   #endif
 
   // bool wifiIsSaved = getWiFiIsSaved();
+  bool wifiIsSaved = true; // workaround until I can check esp32 wifiisinit and has nvs
 
   #ifdef ESP32
   setupHostname(true);
@@ -421,7 +427,7 @@ AutoConnectResult WiFiManager::autoConnectWithResult(char const *apName, char co
 
   // check if wifi is saved, (has autoconnect) to speed up cp start
   // NOT wifi init safe
-  // if(wifiIsSaved){
+  if(wifiIsSaved){
      _startconn = millis();
     _begin();
 
@@ -429,7 +435,7 @@ AutoConnectResult WiFiManager::autoConnectWithResult(char const *apName, char co
     if(!WiFi.enableSTA(true)){
       // handle failure mode Brownout detector etc.
       #ifdef WM_DEBUG_LEVEL
-      DEBUG_WM(DEBUG_ERROR,F("[FATAL] Unable to enable wifi!"));
+      DEBUG_WM(WM_DEBUG_ERROR,F("[FATAL] Unable to enable wifi!"));
       #endif
       return AutoConnectResult::FAILED;
     }
@@ -471,7 +477,7 @@ AutoConnectResult WiFiManager::autoConnectWithResult(char const *apName, char co
       //connected
       #ifdef WM_DEBUG_LEVEL
       DEBUG_WM(F("AutoConnect: SUCCESS"));
-      DEBUG_WM(DEBUG_VERBOSE,F("Connected in"),(String)((millis()-_startconn)) + " ms");
+      DEBUG_WM(WM_DEBUG_VERBOSE,F("Connected in"),(String)((millis()-_startconn)) + " ms");
       DEBUG_WM(F("STA IP Address:"),WiFi.localIP());
       #endif
       // Serial.println("Connected in " + (String)((millis()-_startconn)) + " ms");
@@ -479,7 +485,7 @@ AutoConnectResult WiFiManager::autoConnectWithResult(char const *apName, char co
 
       if(_hostname != ""){
         #ifdef WM_DEBUG_LEVEL
-          DEBUG_WM(DEBUG_DEV,F("hostname: STA: "),getWiFiHostname());
+          DEBUG_WM(WM_DEBUG_DEV,F("hostname: STA: "),getWiFiHostname());
         #endif
       }
       return AutoConnectResult::CONNECTED_BY_SAVED_CREDENTIALS; // connected success
@@ -488,17 +494,17 @@ AutoConnectResult WiFiManager::autoConnectWithResult(char const *apName, char co
     #ifdef WM_DEBUG_LEVEL
     DEBUG_WM(F("AutoConnect: FAILED for "),(String)((millis()-_startconn)) + " ms");
     #endif
-  // }
-  // else {
-    // #ifdef WM_DEBUG_LEVEL
-    // DEBUG_WM(F("No Credentials are Saved, skipping connect"));
-    // #endif
-  // } 
+  }
+  else {
+    #ifdef WM_DEBUG_LEVEL
+    DEBUG_WM(F("No Credentials are Saved, skipping connect"));
+    #endif
+  }
 
   // possibly skip the config portal
   if (!_enableConfigPortal) {
     #ifdef WM_DEBUG_LEVEL
-    DEBUG_WM(DEBUG_VERBOSE,F("enableConfigPortal: FALSE, skipping "));
+    DEBUG_WM(WM_DEBUG_VERBOSE,F("enableConfigPortal: FALSE, skipping "));
     #endif
 
     return AutoConnectResult::FAILED; // not connected and not cp
@@ -507,11 +513,6 @@ AutoConnectResult WiFiManager::autoConnectWithResult(char const *apName, char co
   // not connected start configportal
   bool res = startConfigPortal(apName, apPassword);
   return res ? AutoConnectResult::CONNECTED_BY_CONFIG_MENUE : AutoConnectResult::FAILED;
-}
-
-  // not connected start configportal
-  bool res = startConfigPortal(apName, apPassword);
-  return res;
 }
 
 bool WiFiManager::setupHostname(bool restart){
